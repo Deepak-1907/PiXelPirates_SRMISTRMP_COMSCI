@@ -1,301 +1,301 @@
+// InsightAI Full Application
+// Backend + Frontend in a single Node.js file
+
+const express = require("express");
+const cors = require("cors");
+const OpenAI = require("openai");
 
-# 🚀 InsightAI
-### AI Tutor That Explains Concepts the Way Students Think
+const app = express();
 
-InsightAI is an AI-powered learning assistant designed for **NCERT Class 9–12 students**.
+app.use(cors());
+app.use(express.json());
 
-Unlike traditional AI tutors that respond in formal textbook language, InsightAI understands **codemixed student language such as Hinglish or Tanglish** and explains concepts conversationally like a helpful senior student.
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-The goal is to make **concept learning intuitive, interactive, and personalized**.
+let topicHistory = {};
 
----
+app.get("/", (req, res) => {
 
-# 📚 Problem
+res.send(`
 
-Over **250 million students in India** study using the NCERT curriculum.
+<!DOCTYPE html>
+<html>
 
-However most AI tools:
+<head>
 
-- respond in **formal academic English**
-- give **long textbook explanations**
-- lack **interactive learning features**
+<title>InsightAI</title>
 
-Students often ask doubts like:
+<style>
 
-Student Question Example:
+body{
+font-family: Arial;
+background:#f5f5f5;
+margin:0;
+padding:0;
+text-align:center;
+}
 
-bhaiya inertia kya hota hai
+h1{
+background:#222;
+color:white;
+padding:20px;
+margin:0;
+}
 
-But typical AI responses feel like a **Wikipedia article instead of a human explanation**.
+#chat{
+width:70%;
+margin:auto;
+margin-top:20px;
+background:white;
+height:400px;
+overflow:auto;
+padding:20px;
+border-radius:10px;
+}
 
-This creates a **language gap between AI tutors and real student thinking patterns**.
+.message{
+margin:10px 0;
+padding:10px;
+border-radius:8px;
+}
 
----
+.user{
+background:#d1e7ff;
+}
 
-# 💡 Solution
+.bot{
+background:#e8e8e8;
+}
 
-InsightAI bridges this gap by creating a **student-friendly AI tutor** that:
+#inputArea{
+margin-top:20px;
+}
 
-- understands **codemixed language**
-- explains concepts with **real-life examples**
-- generates **practice questions**
-- detects **student confusion**
-- suggests **next learning topics**
+input{
+width:40%;
+padding:10px;
+font-size:16px;
+}
 
-The system behaves like a **smart senior student mentor rather than a textbook bot**.
+button{
+padding:10px 15px;
+font-size:16px;
+margin:5px;
+cursor:pointer;
+}
 
----
+.section{
+margin-top:10px;
+padding:10px;
+background:#fafafa;
+border-radius:8px;
+}
 
-# ✨ Key Features
+</style>
 
-## 🧠 Conversational AI Tutor
+</head>
 
-- Understands **Hinglish / Tanglish style questions**
-- Explains concepts using **simple conversational language**
-- Uses relatable examples like buses, cricket, cooking, etc.
+<body>
 
-Example interaction:
+<h1>InsightAI</h1>
 
-Student: bhaiya inertia kya hota hai
+<div id="chat"></div>
 
-InsightAI responds with a simple explanation and analogy.
+<div id="inputArea">
 
----
+<input id="question" placeholder="Ask your doubt..." />
 
-## 🔊 Voice Explanation
+<button onclick="sendMessage()">Send</button>
 
-Students can **listen to explanations instead of reading**.
+<button onclick="startVoice()">🎤 Ask with Voice</button>
 
-Features:
+</div>
 
-- "Listen Explanation" button
-- Uses browser **SpeechSynthesis API**
-- Indian English voice support
+<script>
 
----
+function addMessage(text, type){
 
-## 🎤 Voice Question Input
+const chat = document.getElementById("chat");
 
-Students can **ask doubts using voice**.
+const div = document.createElement("div");
 
-Process:
+div.className = "message " + type;
 
-1. Click microphone button
-2. Speak question
-3. Speech converted to text
-4. Automatically sent to chatbot
+div.innerText = text;
 
-Uses **Web Speech API**.
+chat.appendChild(div);
 
----
+chat.scrollTop = chat.scrollHeight;
 
-## 🧩 Concept Map Generator
+}
 
-After every explanation, InsightAI generates a **concept map**.
+async function sendMessage(){
 
-Example:
+const input = document.getElementById("question");
 
-Photosynthesis  
-→ Chlorophyll  
-→ Sunlight Energy  
-→ Glucose Formation  
+const message = input.value;
 
-This helps students understand **how concepts connect**.
+if(!message) return;
 
----
+addMessage("You: " + message,"user");
 
-## 📝 Smart Practice Questions
+input.value = "";
 
-InsightAI automatically generates **3 difficulty levels**:
+const res = await fetch("/chat",{
 
-- Easy → definition recall
-- Medium → application question
-- Hard → conceptual reasoning
+method:"POST",
 
-This makes the chatbot function like a **mini practice tutor**.
+headers:{
+"Content-Type":"application/json"
+},
 
----
+body:JSON.stringify({
+message
+})
 
-## 🔍 Confusion Detection
+});
 
-The system tracks **repeated student questions**.
+const data = await res.json();
 
-If the same topic appears multiple times:
+addMessage("InsightAI:\\n\\n" + data.reply,"bot");
 
-InsightAI automatically switches to **simpler explanations with analogies**.
+createVoiceButton(data.reply);
 
-Example response:
+}
 
-"It looks like this topic might still be confusing. Let me explain it in a simpler way."
+function createVoiceButton(text){
 
----
+const chat = document.getElementById("chat");
 
-## 📊 Weakness Analyzer
+const btn = document.createElement("button");
 
-InsightAI identifies **topics where students struggle**.
+btn.innerText = "🔊 Listen Explanation";
 
-When repeated questions occur, it generates a **mini practice test**:
+btn.onclick = function(){
 
-Mini Test
+const speech = new SpeechSynthesisUtterance(text);
 
-Q1 Easy  
-Q2 Medium  
-Q3 Hard  
+speech.lang = "en-IN";
 
-This creates **adaptive learning**.
+speechSynthesis.speak(speech);
 
----
+}
 
-## 🧭 Concept Journey (Learning Path)
+chat.appendChild(btn);
 
-After explaining a topic, InsightAI suggests **next concepts to learn**.
+}
 
-Example:
+function startVoice(){
+
+const recognition = new webkitSpeechRecognition();
+
+recognition.lang = "en-IN";
+
+recognition.start();
+
+recognition.onresult = function(event){
+
+const transcript = event.results[0][0].transcript;
+
+document.getElementById("question").value = transcript;
+
+sendMessage();
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
+
+`);
+
+});
+
+
+app.post("/chat", async (req,res)=>{
+
+const message = req.body.message;
+
+const topic = message.toLowerCase();
+
+if(!topicHistory[topic]){
+
+topicHistory[topic] = 0;
+
+}
+
+topicHistory[topic]++;
+
+let confusionText = "";
+
+if(topicHistory[topic] >= 2){
+
+confusionText =
+"It seems you are asking about this topic multiple times. Let me explain it in a simpler way using a real-life example.";
+
+}
+
+const response = await client.chat.completions.create({
+
+model:"gpt-4o-mini",
+
+messages:[
+
+{
+role:"system",
+content:`
+
+You are InsightAI, an AI tutor for NCERT class 9-12 students.
+
+Rules:
+
+1. Understand Hinglish or Tanglish questions.
+2. Explain concepts conversationally like a senior student.
+3. Use simple examples (cricket, buses, cooking).
+4. Stay within Physics, Chemistry, Math, Biology syllabus.
+
+Your response structure:
+
+Explanation
+
+Concept Map
+
+Practice Questions
+Easy
+Medium
+Hard
 
 Learning Path
 
-To fully understand Newton's Laws:
+`
+},
 
-1. Force  
-2. Momentum  
-3. Friction  
+{
+role:"user",
+content: confusionText + message
+}
 
-This transforms the chatbot into a **guided learning system**.
+]
 
----
+});
 
-# 🏗 Architecture
+const reply = response.choices[0].message.content;
 
-Student Question  
-↓  
-Frontend Chat Interface  
-↓  
-Backend (Node.js + Express)  
-↓  
-OpenAI API  
-↓  
-AI Response Processing  
-↓  
-InsightAI Structured Output
+res.json({
+reply
+});
 
-Explanation  
-Concept Map  
-Practice Questions  
-Learning Path  
+});
 
----
 
-# ⚙ Tech Stack
+app.listen(3000, ()=>{
 
-Frontend:
+console.log("InsightAI running on port 3000");
 
-- HTML
-- CSS
-- JavaScript
-
-Backend:
-
-- Node.js
-- Express.js
-
-AI:
-
-- OpenAI API
-
-Browser APIs:
-
-- Web Speech API (Voice Input)
-- SpeechSynthesis API (Voice Output)
-
----
-
-# 📂 Project Structure
-
-InsightAI  
-│  
-├── server.js  
-├── package.json  
-
-├── public  
-│   ├── index.html  
-│   ├── script.js  
-│   └── style.css  
-
-└── README.md  
-
----
-
-# 🚀 Running the Project
-
-### Clone Repository
-
-```bash
-git clone https://github.com/yourusername/InsightAI.git
-```
-
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Add API Key
-
-Create a `.env` file:
-
-```
-OPENAI_API_KEY=your_api_key
-```
-
-### Start Server
-
-```bash
-node server.js
-```
-
-Open in browser:
-
-```
-http://localhost:3000
-```
-
----
-
-# 🌍 Live Demo
-
-Example deployment:
-
-```
-https://insight-ai--yourusername.replit.app
-```
-
----
-
-# 🎯 Future Improvements
-
-- diagram generation for physics concepts  
-- teacher analytics dashboard  
-- personalized revision plans  
-- exam preparation mode  
-- multilingual explanations  
-
----
-
-# 👨‍💻 Author
-
-Deepak Narayanan
-
-B.Tech Computer Science student interested in:
-
-- Artificial Intelligence
-- EdTech
-- Full-Stack Development
-- AI-powered learning systems
-
----
-
-# ⭐ Inspiration
-
-InsightAI is inspired by the idea that **AI should speak the language students actually think in**.
-
-The mission is to make **quality learning assistance accessible to millions of students**.
+});
